@@ -25,10 +25,16 @@ class Product(models.Model):
     updated_at          = models.DateTimeField(auto_now = True)
     menu                = models.ForeignKey("Menu", on_delete=models.CASCADE)
     category            = models.ForeignKey("Category", on_delete=models.CASCADE, null=True)
-    tasting_notes       = models.ManyToManyField("TastingNote", through="products_tasting_notes")
+    tasting_notes       = models.ManyToManyField("TastingNote")
 
     class Meta:
         db_table = 'products'
+
+class TastingNote(models.Model):
+    name       = models.CharField(max_length=20)
+
+    class Meta:
+        db_table = 'tasting_notes'
 
 class Image(models.Model):
     image_url  = models.CharField(max_length=1000)
@@ -38,19 +44,6 @@ class Image(models.Model):
 
     class Meta:
         db_table = 'images'
-
-class TastingNote(models.Model):
-    name       = models.CharField(max_length=20)
-
-    class Meta:
-        db_table = 'tasting_notes'
-
-class Product_TaastingNote(models.Model):
-    product      = models.ForeignKey("Product", on_delete=models.CASCADE)
-    tasting_note = models.ForeignKey("TastingNote", on_delete=models.CASCADE)
-
-    class Meta:
-        db_table = 'products_tasting_notes'
 
 class ProductStock(models.Model):
     stock      = models.IntegerField()
