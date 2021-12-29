@@ -389,3 +389,7 @@ zsdoc/data
 # End of https://www.toptal.com/developers/gitignore/api/python,visualstudiocode,windows,macos,zsh,linux,pycharm,vim
 
 my_settings.py
+
+db_uploader.py
+
+/csv
