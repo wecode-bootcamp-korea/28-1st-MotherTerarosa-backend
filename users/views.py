@@ -19,7 +19,7 @@ class SignUpView(View):
 
             username_regex = '^[a-z0-9]{4,16}$'
             password_regex = '^(?=.*[A-Za-z])(?=.*\d)(?=.*[$@$!%*#?&])[A-Za-z\d$@$!%*#?&]{8,}$'
-            email_regex = '[a-zA-Z0-9.-_+]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9.]+'
+            email_regex    = '[a-zA-Z0-9.-_+]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9.]+'
 
             if not re.match(username_regex, username):
                 return JsonResponse({'message': 'INVALID_USERNAME'}, status = 400)
