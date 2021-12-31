@@ -1,10 +1,12 @@
+import uuid
+
 from django.db import models
 
 from products.models import Product
 from users.models    import User
 
 class Order(models.Model):
-    order_number = models.CharField(max_length=100)
+    order_number = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     price        = models.DecimalField(max_digits=9 , decimal_places=2)
     quantity     = models.IntegerField()
     created_at   = models.DateTimeField(auto_now_add = True)
