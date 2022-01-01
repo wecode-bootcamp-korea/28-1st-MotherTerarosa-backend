@@ -1,6 +1,5 @@
 import json
 from json.decoder import JSONDecodeError
-from os import stat_result
 
 from django.http   import JsonResponse, request
 from django.views  import View
@@ -25,15 +24,20 @@ class CartView(View):
     def post(self, requset):
 
         try:
-            data = json.loads(request.body)
+            cart_data = json.loads(request.body)
+            # 유저, 제품, 제품수량
+            # 유저 정보에 따라서 user 변수 변경 필요
 
-            if not User.objects.filter(user = data['user']).exists():
+
+            if not User.objects.filter(user = cart_data['user']).exists():
                 return JsonResponse({'message':'INVALID_USER'}, status=400)
 
-            carts = Cart.objects.create(
-                quantity = data['quantity'],
-                user     = data['user'],
-                product  = data['product_id'],
+            cart_data['product_id']
+
+            Cart.objects.create(
+                quantity = cart_data['quantity'],
+                user     = cart_data['user'],
+                product  = cart_data['product_id'],
             )
 
             return JsonResponse({'message': 'CREATED'}, status = 201) 
