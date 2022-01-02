@@ -21,26 +21,35 @@ from products.models import (
 from users.models    import User
 
 class CartView(View):
+    #@login_decorator
     def post(self, requset):
 
         try:
             cart_data = json.loads(request.body)
-            # 유저, 제품, 제품수량
-            # 유저 정보에 따라서 user 변수 변경 필요
 
+            quantity   = cart_data['quantity']
+            user       = cart_data['user']
+            product_id = cart_data['product_id']
 
-            if not User.objects.filter(user = cart_data['user']).exists():
+            if not User.objects.filter(user = user).exists():
                 return JsonResponse({'message':'INVALID_USER'}, status=400)
 
-            cart_data['product_id']
+            if Cart.objects.filter(user=user, product_id = product_id).exists():
+                exist_product = Cart.objects.get(user=user, product_id=product_id)
+                exist_product.quantity += quantity
+                exist_product.save()
+                return JsonResponse({'message': 'PRODUCT_ADDED'}, status = 201)
 
             Cart.objects.create(
-                quantity = cart_data['quantity'],
-                user     = cart_data['user'],
-                product  = cart_data['product_id'],
+                quantity   = quantity,
+                user       = user,
+                product_id = product_id,
             )
 
-            return JsonResponse({'message': 'CREATED'}, status = 201) 
+            return JsonResponse({'message': 'PRODUCT_ADDED'}, status = 201)
+
+        except Cart.DoesNotExist:
+            return JsonResponse({'message': 'INVALID_'}, status=400)            
 
         except KeyError:
             return JsonResponse({'message': 'KEY_ERROR'}, status=400)
@@ -48,5 +57,6 @@ class CartView(View):
         except JSONDecodeError:
             return JsonResponse({'message': 'JSONDecodeError'}, status=400)
 
+    #@login_decorator
     def get(self, request):
         pass
