@@ -1,10 +1,7 @@
-import json
-
-from django.http  import JsonResponse, request
-from django.http  import Http404
+from django.http  import JsonResponse
 from django.views import View
 
-from products.models import Product, Category, TastingNote, Image
+from products.models import Product
 
 class ShopListView(View):
     def get(self, request):
