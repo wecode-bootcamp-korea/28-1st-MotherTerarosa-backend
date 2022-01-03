@@ -1,11 +1,14 @@
 import json
 import re
 import bcrypt
+import jwt
 
 from django.views import View
 from django.http  import JsonResponse
 
+from my_settings  import ALGORITHM, SECRET_KEY 
 from users.models import User
+from datetime     import datetime, timedelta
 
 class SignUpView(View):
     def post(self, request):
@@ -17,7 +20,7 @@ class SignUpView(View):
             name          = data['name']
             email         = data['email']
 
-            username_regex = '^[a-z0-9]{4,16}$'
+            username_regex = '[a-z0-9]{4,16}'
             password_regex = '^(?=.*[A-Za-z])(?=.*\d)(?=.*[$@$!%*#?&])[A-Za-z\d$@$!%*#?&]{8,}$'
             email_regex    = '[a-zA-Z0-9.-_+]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9.]+'
 
@@ -47,3 +50,30 @@ class SignUpView(View):
             return JsonResponse({'messege': 'CREATE ACCOUNT SUCCESS'}, status = 201)
         except KeyError:
             return JsonResponse({'message': 'KEY_ERROR'}, status = 400)
+
+class LogInView(View):
+    def post(self, request):
+        try:
+            data = json.loads(request.body)
+
+            user = User.objects.get(username = data['username'])           
+          
+            if not bcrypt.checkpw(data['password'].encode('utf-8'), user.password.encode('utf-8')):
+                return JsonResponse({'message': 'INVALID_USER'}, status = 400)
+
+            payload = {'id': user.id, 'exp':datetime.utcnow() + timedelta(hours=3)}
+            access_token = jwt.encode(payload, SECRET_KEY, algorithm = ALGORITHM)
+                    
+            return JsonResponse({'message': 'LOGIN SUCCESS', 'token': access_token}, status = 200)
+       
+        except jwt.ExpiredSignatureError:
+            return JsonResponse({"message": "EXPIRED_TOKEN"}, status = 400)
+
+        except json.JSONDecodeError:
+            return JsonResponse({'message': 'JSONDecodeError'}, status = 400)
+
+        except User.DoesNotExist:
+            return JsonResponse({'message': 'INVALID_USER'}, status = 404)
+
+        except KeyError:
+            return JsonResponse({'message': 'KEY_ERROR'}, status = 400)                        
