@@ -30,8 +30,11 @@ class SignUpView(View):
             if not re.match(email_regex, email):
                 return JsonResponse({'message': 'INVALID_EMAIL'}, status = 400)    
 
-            if User.objects.filter(username, email).exists():
-                return JsonResponse({'message': 'ALREADY_EXIST'}, status = 400)
+            if User.objects.filter(username = username).exists():
+                return JsonResponse({'message': 'ALREADY_EXIST_USERNAME'}, status = 400)
+
+            if User.objects.filter(email = email).exists():
+                return JsonResponse({'message': 'ALREADY_EXIST_EMAIL'}, status = 400)
 
             hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
