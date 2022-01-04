@@ -6,7 +6,7 @@ import jwt
 from django.views import View
 from django.http  import JsonResponse
 
-from my_settings  import ALGORITHM, SECRET_KEY 
+from my_settings  import ALGORITHM, SECRET_KEY
 from users.models import User
 from datetime     import datetime, timedelta
 
@@ -31,7 +31,7 @@ class SignUpView(View):
                 return JsonResponse({'message': 'INVALID_PASSWORD'}, status = 400)
 
             if not re.match(email_regex, email):
-                return JsonResponse({'message': 'INVALID_EMAIL'}, status = 400)    
+                return JsonResponse({'message': 'INVALID_EMAIL'}, status = 400)
 
             if User.objects.filter(username = username).exists():
                 return JsonResponse({'message': 'ALREADY_EXIST_USERNAME'}, status = 400)
@@ -56,18 +56,15 @@ class LogInView(View):
         try:
             data = json.loads(request.body)
 
-            user = User.objects.get(username = data['username'])           
-          
+            user = User.objects.get(username = data['username'])
+
             if not bcrypt.checkpw(data['password'].encode('utf-8'), user.password.encode('utf-8')):
                 return JsonResponse({'message': 'INVALID_USER'}, status = 400)
 
             payload = {'id': user.id, 'exp':datetime.utcnow() + timedelta(hours=3)}
             access_token = jwt.encode(payload, SECRET_KEY, algorithm = ALGORITHM)
-                    
+
             return JsonResponse({'message': 'LOGIN SUCCESS', 'token': access_token}, status = 200)
-       
-        except jwt.ExpiredSignatureError:
-            return JsonResponse({"message": "EXPIRED_TOKEN"}, status = 400)
 
         except json.JSONDecodeError:
             return JsonResponse({'message': 'JSONDecodeError'}, status = 400)
@@ -76,4 +73,4 @@ class LogInView(View):
             return JsonResponse({'message': 'INVALID_USER'}, status = 404)
 
         except KeyError:
-            return JsonResponse({'message': 'KEY_ERROR'}, status = 400)                        
+            return JsonResponse({'message': 'KEY_ERROR'}, status = 400)
