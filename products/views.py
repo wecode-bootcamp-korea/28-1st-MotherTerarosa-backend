@@ -1,7 +1,9 @@
+import datetime
+
 from django.http  import JsonResponse
 from django.views import View
 
-from products.models import Product
+from products.models import Category, Menu, Product
 
 class ShopListView(View):
     def get(self, request):
@@ -10,32 +12,81 @@ class ShopListView(View):
 
         if not query_no:
             return JsonResponse({'message':'INVALID_REQUEST'}, status=400)
+        category_no   = ""
+        category_name = ""
+        products      = ""
+        category_id   = 0
+        menu_id       = 0
+
+        if query_no == "0":
+            products      = Product.objects.all()
         
-        query_separation = str(query_no).split('0')
-
-        if query_separation[-1]:
-            category_id = query_separation[-1]
-            products    = Product.objects.filter(category_id = category_id)
-
         else:
-            menu_id     = query_separation[0]
-            products    = Product.objects.filter(menu_id = menu_id)
+            query_separation = str(query_no).split('0')
+            category_no      = str(query_no)
+            category_name    = ""
 
-        result = []
+            if query_separation[-1]:
+                category_id   = query_separation[-1]
+                products      = Product.objects.filter(category_id = category_id)
+                category_name = Category.objects.get(id=category_id).name
+
+            else:
+                menu_id       = query_separation[0]
+                products      = Product.objects.filter(menu_id = menu_id)
+                category_name = Menu.objects.get(id=menu_id).name
+        
+        product_list = []
         for product in products:
-            target_product    = Product.objects.filter(id=product.id)
-            target_product_pr = target_product.prefetch_related('tasting_notes_set')[0]
-            tasting_notes     = target_product_pr.tasting_notes_set.all()
-            tasting_note      = [note for note in tasting_notes.name]
-            price             = float(product.price)
+            target       = Product.objects.get(id=product.id)
+            notes        = target.tasting_notes.values()
+            price        = int(product.price)
+            tasting_note = []
+            for note in notes:
+                tasting_note.append(note["name"])
 
-            result.append(
+            tasting_note_str = ", ".join(tasting_note)
+
+            product_list.append(
                 {
-                    "name"                : product.name,
-                    "tasting_notes"       : tasting_note,
+                    "id"                  : product.id,
+                    "product_name"        : product.name,
                     "price"               : price,
+                    "description"         : tasting_note_str,
+                    "date"                : product.created_at.strftime("%Y-%m-%d"),
                     "thumbnail_image_url" : product.thumbnail_image_url 
                 }
             )
-
+            
+        result = {
+            "category_no"   : category_no,
+            "category_name" : category_name,
+            "products"      : product_list
+        }
         return JsonResponse({'result':result}, status=200)
+
+class CategoryView(View):
+    def get(self, request):
+        categories = []
+        menus_list = Menu.objects.all()
+
+        for menu_obj in menus_list:
+            menu_no         = str(menu_obj.id)+"00"
+            menu_name       = menu_obj.name
+            categories_list = menu_obj.category_set.all()
+            sub_categories  = []
+            sub_categories  = [
+                {
+                    "no"   : menu_no+"00"+str(sub_category.id),
+                    "name" : sub_category.name
+                } for sub_category in categories_list if categories_list != []
+            ]
+            categories.append(
+                {
+                    "no"             : menu_no,
+                    "name"           : menu_name,
+                    "sub_categories" : sub_categories
+                }
+            )
+            
+        return JsonResponse({'result':categories}, status=200)
