@@ -15,11 +15,11 @@ class ShopListView(View):
 
         if query_separation[-1]:
             category_id = query_separation[-1]
-            products = Product.objects.filter(category_id = category_id)
+            products    = Product.objects.filter(category_id = category_id)
 
         else:
             menu_id     = query_separation[0]
-            products = Product.objects.filter(menu_id = menu_id)
+            products    = Product.objects.filter(menu_id = menu_id)
 
         result = []
         for product in products:
@@ -37,4 +37,5 @@ class ShopListView(View):
                     "thumbnail_image_url" : product.thumbnail_image_url 
                 }
             )
-        return JsonResponse({'message':'SUCCESS'}, status=200)
+
+        return JsonResponse({'result':result}, status=200)
