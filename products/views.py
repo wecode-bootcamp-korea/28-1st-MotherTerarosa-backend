@@ -12,7 +12,7 @@ class MainView(View):
             data = [{
                 "categoryName" : "BEST",
                 "products" : [{
-                    "id" : str(best.id),
+                    "id" : str(best.id), # FIXME 
                     "name" : best.name,
                     "price" : int(best.price),
                     "tasting_note" : [taste.name for taste in best.tasting_notes.all()],
@@ -23,7 +23,7 @@ class MainView(View):
                 {
                 "categoryName" : "NEW",
                 "products" : [{
-                    "id" : str(new.id),
+                    "id" : str(new.id), # FIXME
                     "name" : new.name,
                     "price" : int(new.price),
                     "tasting_note" : [taste.name for taste in new.tasting_notes.all()],
@@ -45,74 +45,67 @@ class ProductDetailView(View):
             image = product.image_set.all()
 
             data = {
-                "name" : product.name,
+                "name"        : product.name,
                 "description" : product.description,
-                "price" : int(product.price),
-                "image_url" : [i.image_url for i in image]
+                "price"       : int(product.price),
+                "image_url"   : [i.image_url for i in image]
             }
             return JsonResponse({'result' : data}, status=200)
 
         except Product.DoesNotExist:
             return JsonResponse({'message' : 'NOT_FOUND'}, status=400)
 
-class ShopListView(View):
+class ProductListView(View):
+    def concat_notes(self, ls):
+        return ", ".join(ls)
+    
     def get(self, request):
+        category_id = request.GET.get('category', None)
+
+        # category_no   = ""
+        # category_name = ""
+        # products      = ""
+        # category_id   = 0
+        # menu_id       = 0
+
+        # if query_no == "0":
+        #     products      = Product.objects.all()
+
+        q = Q()
         
-        query_no = request.GET.get('category_no', None)
-
-        if not query_no:
-            return JsonResponse({'message':'INVALID_REQUEST'}, status=400)
-        category_no   = ""
-        category_name = ""
-        products      = ""
-        category_id   = 0
-        menu_id       = 0
-
-        if query_no == "0":
-            products      = Product.objects.all()
-        
-        else:
-            query_separation = str(query_no).split('0')
-            category_no      = str(query_no)
-            category_name    = ""
-
-            if query_separation[-1]:
-                category_id   = query_separation[-1]
-                products      = Product.objects.filter(category_id = category_id)
-                category_name = Category.objects.get(id=category_id).name
-
-            else:
-                menu_id       = query_separation[0]
-                products      = Product.objects.filter(menu_id = menu_id)
-                category_name = Menu.objects.get(id=menu_id).name
-        
-        product_list = []
-        for product in products:
-            target       = Product.objects.get(id=product.id)
-            notes        = target.tasting_notes.values()
-            price        = int(product.price)
-            tasting_note = []
-            for note in notes:
-                tasting_note.append(note["name"])
-
-            tasting_note_str = ", ".join(tasting_note)
-
-            product_list.append(
-                {
-                    "id"                  : product.id,
-                    "product_name"        : product.name,
-                    "price"               : price,
-                    "description"         : tasting_note_str,
-                    "date"                : product.created_at.strftime("%Y-%m-%d"),
-                    "thumbnail_image_url" : product.thumbnail_image_url 
-                }
-            )
+        if category_id:
+            q &= Q(category_id=category_id)
             
+        filter(q)
+        
+        query_separation = str(category_id).split('-') # 100, 200, 300, 200-001, 200-002
+
+
+        if query_separation[-1]:
+            category_id   = query_separation[-1]
+            products      = Product.objects.filter(category_id = category_id)
+            category_name = Category.objects.get(id=category_id).name
+
+        else:
+            menu_id       = query_separation[0]
+            products      = Product.objects.filter(menu_id = menu_id)
+            category_name = Menu.objects.get(id=menu_id).name
+        
+        product_list = [{
+            "id"                  : product.id,
+            "product_name"        : product.name,
+            "price"               : int(product.price),
+            "description"         : self.concat_notes([note.name for note in product.tasting_notes.all()]),
+            "date"                : product.created_at.strftime("%Y-%m-%d"),
+            "thumbnail_image_url" : product.thumbnail_image_url 
+        } for product in products]
+
         result = {
             "category_no"   : category_no,
             "category_name" : category_name,
             "products"      : product_list
         }
+
         return JsonResponse({'result':result}, status=200)
 
 class CategoryView(View):
@@ -124,7 +117,6 @@ class CategoryView(View):
             menu_no         = str(menu_obj.id)+"00"
             menu_name       = menu_obj.name
             categories_list = menu_obj.category_set.all()
-            sub_categories  = []
             sub_categories  = [
                 {
                     "no"   : menu_no+"00"+str(sub_category.id),
