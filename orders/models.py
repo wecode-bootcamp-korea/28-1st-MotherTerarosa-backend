@@ -7,8 +7,7 @@ from users.models    import User
 
 class Order(models.Model):
     order_number = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    price        = models.DecimalField(max_digits=9 , decimal_places=2)
-    quantity     = models.IntegerField()
+    total_price  = models.DecimalField(max_digits=9 , decimal_places=2)
     created_at   = models.DateTimeField(auto_now_add = True)
     updated_at   = models.DateTimeField(auto_now = True)
     user         = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -25,8 +24,10 @@ class OrderStatus(models.Model):
         db_table = 'orderstatuses'
 
 class Order_Product(models.Model):
-    order   = models.ForeignKey("Order", on_delete=models.CASCADE)
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    order       = models.ForeignKey("Order", on_delete=models.CASCADE)
+    quantity    = models.IntegerField()
+    total_price = models.DecimalField(max_digits=9 , decimal_places=2)
+    product     = models.ForeignKey(Product, on_delete=models.CASCADE)
 
     class Meta:
         db_table = 'orders_products'
