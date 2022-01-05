@@ -55,64 +55,44 @@ class ProductDetailView(View):
         except Product.DoesNotExist:
             return JsonResponse({'message' : 'NOT_FOUND'}, status=400)
 
-class ShopListView(View):
+class ProductListView(View):
+    def concat_notes(self, notes_list):
+        return ', '.join(notes_list)
+
     def get(self, request):
         
-        query_no = request.GET.get('category_no', None)
+        category = request.GET.get('category', None)
 
-        if not query_no:
-            return JsonResponse({'message':'INVALID_REQUEST'}, status=400)
-        category_no   = ""
-        category_name = ""
-        products      = ""
-        category_id   = 0
-        menu_id       = 0
+        products         = Product.objects.all()
+        query_separation = str(category).split('0')
+        category_no      = str(category)
+        category_name    = ""
 
-        if query_no == "0":
-            products      = Product.objects.all()
-        
+        if query_separation[-1]:
+            category_id   = query_separation[-1]
+            products      = Product.objects.filter(category_id = category_id)
+            category_name = Category.objects.get(id=category_id).name
+
         else:
-            query_separation = str(query_no).split('0')
-            category_no      = str(query_no)
-            category_name    = ""
-
-            if query_separation[-1]:
-                category_id   = query_separation[-1]
-                products      = Product.objects.filter(category_id = category_id)
-                category_name = Category.objects.get(id=category_id).name
-
-            else:
-                menu_id       = query_separation[0]
-                products      = Product.objects.filter(menu_id = menu_id)
-                category_name = Menu.objects.get(id=menu_id).name
+            menu_id       = query_separation[0]
+            products      = Product.objects.filter(menu_id = menu_id)
+            category_name = Menu.objects.get(id=menu_id).name
         
-        product_list = []
-        for product in products:
-            target       = Product.objects.get(id=product.id)
-            notes        = target.tasting_notes.values()
-            price        = int(product.price)
-            tasting_note = []
-            for note in notes:
-                tasting_note.append(note["name"])
-
-            tasting_note_str = ", ".join(tasting_note)
-
-            product_list.append(
-                {
-                    "id"                  : product.id,
-                    "product_name"        : product.name,
-                    "price"               : price,
-                    "description"         : tasting_note_str,
-                    "date"                : product.created_at.strftime("%Y-%m-%d"),
-                    "thumbnail_image_url" : product.thumbnail_image_url 
-                }
-            )
+        product_list = [{
+            "id"                  : product.id,
+            "product_name"        : product.name,
+            "price"               : int(product.price),
+            "description"         : self.concat_notes([note.name for note in product.tasting_notes.all()]),
+            "date"                : product.created_at.strftime("%Y-%m-%d"),
+            "thumbnail_image_url" : product.thumbnail_image_url 
+        } for product in products]
             
         result = {
             "category_no"   : category_no,
             "category_name" : category_name,
             "products"      : product_list
         }
+        
         return JsonResponse({'result':result}, status=200)
 
 class CategoryView(View):
