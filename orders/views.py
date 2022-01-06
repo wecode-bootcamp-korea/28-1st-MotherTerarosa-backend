@@ -4,13 +4,12 @@ from django.http  import JsonResponse
 from django.views import View
 from json.decoder import JSONDecodeError
 
-from orders.models         import Order,Order_Product,OrderStatus
+from orders.models         import Order_Product
 from products.models       import Cart, Product
-from users.models          import User
-#from utils.login_decorator import login_decorator
+from utils.login_decorator import login_decorator
 
 class CartView(View):
-    #@login_decorator
+    @login_decorator
     def post(self, request):
         try:
             data = json.loads(request.body)
@@ -36,7 +35,7 @@ class CartView(View):
         except Cart.DoesNotExist:
             return JsonResponse({'message': 'CART_NOT_EXIST'}, status = 404)    
 
-    #@login_decorator
+    @login_decorator
     def get(self, request):
 
         user   = request.user
@@ -53,7 +52,7 @@ class CartView(View):
 
         return JsonResponse({'result': result}, status = 200)
        
-    #@login_decorator
+    @login_decorator
     def delete(self, request):
         try:
             data = json.loads(request.body)
@@ -72,3 +71,38 @@ class CartView(View):
 
         except KeyError:
             return JsonResponse({'message': 'KEY_ERROR'}, status = 400)
+
+class OrderView(View):
+    @login_decorator
+    def post(self, request):
+        try:
+            data = json.loads(request.body)
+
+            product_id = data['product_id']
+            quantity = data['quantity']
+
+            users = request.user
+            points = int(users.point)
+            products = Product.objects.get(id=product_id)
+            total_price = int(products.price) * int(quantity)
+            remain_point = points - total_price
+
+            Order_Product.objects.create(
+                product_id = product_id,
+                quantity = quantity,
+                total_price = total_price
+            )
+
+            user_data = {
+                "user_name" : users.name,
+                "user_point" : remain_point
+            }
+
+            return JsonResponse({"result" : user_data}, status=200)
+
+        except KeyError:
+            return JsonResponse({"message" : "KEY_ERROR"}, status=400)
+        except JSONDecodeError:
+            return JsonResponse({"message" : ""}, status=400)
+        except Product.DoesNotExist:
+            return JsonResponse({"message" : "INVALID_PRODUCT"}, status=400)
