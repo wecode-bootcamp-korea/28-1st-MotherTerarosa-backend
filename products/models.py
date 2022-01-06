@@ -9,8 +9,8 @@ class Menu(models.Model):
         db_table = 'menus'
 
 class Category(models.Model):
-    name    = models.CharField(max_length=10)
-    menu    = models.ForeignKey("Menu", on_delete=models.CASCADE)
+    name = models.CharField(max_length=10)
+    menu = models.ForeignKey("Menu", on_delete=models.CASCADE)
     
     class Meta:
         db_table = 'categories'
@@ -55,7 +55,7 @@ class ProductStock(models.Model):
         db_table = 'product_stocks'
 
 class Cart(models.Model):
-    quantity   = models.IntegerField()
+    quantity   = models.IntegerField(default=1)
     created_at = models.DateTimeField(auto_now_add = True)
     updated_at = models.DateTimeField(auto_now = True)
     user       = models.ForeignKey(User, on_delete=models.CASCADE)
