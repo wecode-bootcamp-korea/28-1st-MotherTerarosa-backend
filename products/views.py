@@ -10,12 +10,12 @@ class MainView(View):
     def get(self, request):
         try:
             query_best = Product.objects.all().order_by("-product_hits")[0:3]
-            query_new = Product.objects.all().order_by("created_at")[0:4]
+            query_new  = Product.objects.all().order_by("created_at")[0:4]
 
             data = [{
                 "categoryName" : "BEST",
                 "products" : [{
-                    "id" : str(best.id),
+                    "id" : best.id,
                     "name" : best.name,
                     "price" : int(best.price),
                     "tasting_note" : [taste.name for taste in best.tasting_notes.all()],
@@ -26,7 +26,7 @@ class MainView(View):
                 {
                 "categoryName" : "NEW",
                 "products" : [{
-                    "id" : str(new.id),
+                    "id" : new.id,
                     "name" : new.name,
                     "price" : int(new.price),
                     "tasting_note" : [taste.name for taste in new.tasting_notes.all()],
@@ -64,17 +64,21 @@ class ProductListView(View):
 
     def get(self, request):
         try:
-            category = request.GET.get('category', None) , 200, 200001
-
-            menu_id     = category[:3].rstrip('0')  
-            category_id = category[3:].lstrip('0')
+            category = request.GET.get('category', None)
             
-            category_name = Menu.objects.get(id=menu_id).name
+            menu_id       = ''
+            category_id   = ''
+            category_name = 'shop'
+
+            if category:
+                menu_id     = category[:3].rstrip('0')
+                category_id = category[3:].lstrip('0')
 
             q = Q()
 
             if menu_id:
                 q &= Q(menu_id = menu_id)
+                category_name = Menu.objects.get(id=menu_id).name
 
             if category_id:
                 q &= Q(category_id = category_id)
@@ -92,22 +96,18 @@ class ProductListView(View):
             } for product in products]
                 
             result = {
-                "id"       : category,
-                "name"     : category_name,
-                "products" : product_list
+                "category"      : category,
+                "category_name" : category_name,
+                "products"      : product_list
             }
 
             return JsonResponse({'result': result}, status=200)
-
-        except JSONDecodeError:
-            return JsonResponse({'message': 'JSONDecodeError'}, status=400)
 
         except Menu.DoesNotExist:
             return JsonResponse({'message': 'MENU_DOES_NOT_EXIST'}, status=400)
 
         except Category.DoesNotExist:
             return JsonResponse({'message': 'CATEGORY_DOES_NOT_EXIST'}, status=400)
-
 
 class CategoryView(View):
     def append_sub_categories(self, menu, categories): 
