@@ -1,5 +1,3 @@
-from json import JSONDecodeError
-
 from django.http  import JsonResponse
 from django.views import View
 from django.db.models import Q
