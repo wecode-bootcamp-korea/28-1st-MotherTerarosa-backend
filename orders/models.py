@@ -24,7 +24,7 @@ class OrderStatus(models.Model):
         db_table = 'orderstatuses'
 
 class Order_Product(models.Model):
-    order       = models.ForeignKey("Order", on_delete=models.CASCADE)
+    order       = models.ForeignKey("Order", on_delete=models.CASCADE, null=True) # FIXME Add : null=True
     quantity    = models.IntegerField()
     total_price = models.DecimalField(max_digits=9 , decimal_places=2)
     product     = models.ForeignKey(Product, on_delete=models.CASCADE)

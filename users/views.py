@@ -47,7 +47,7 @@ class SignUpView(View):
                 name          = name,
                 email         = email
             )
-            return JsonResponse({'messege': 'CREATE ACCOUNT SUCCESS'}, status = 201)
+            return JsonResponse({'message': 'CREATE ACCOUNT SUCCESS'}, status = 201) # FIXME messege -> message 로 변경
         except KeyError:
             return JsonResponse({'message': 'KEY_ERROR'}, status = 400)
 
@@ -63,7 +63,7 @@ class LogInView(View):
 
             payload = {'id': user.id, 'exp':datetime.utcnow() + timedelta(hours=3)}
             access_token = jwt.encode(payload, SECRET_KEY, algorithm = ALGORITHM)
-
+            
             return JsonResponse({'message': 'LOGIN SUCCESS', 'token': access_token}, status = 200)
 
         except json.JSONDecodeError:
