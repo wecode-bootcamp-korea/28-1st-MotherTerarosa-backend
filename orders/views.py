@@ -4,12 +4,12 @@ from django.http.response import JsonResponse
 
 from django.views  import View
 
-from orders.models import Order, Order_Product
+from orders.models import Order_Product
 from products.models import Product
-from utils.login_decorator import login_decortor
+from utils.login_decorator import login_decorator
 
 class OrderView(View):
-    @login_decortor
+    @login_decorator
     def post(self, request):
         try:
             data = json.loads(request.body)
@@ -39,6 +39,6 @@ class OrderView(View):
         except KeyError:
             return JsonResponse({"message" : "KEY_ERROR"}, status=400)
         except JSONDecodeError:
-            return JsonResponse({"message" : ""}, status=400)
+            return JsonResponse({"message" : "JSONDecodeError"}, status=400)
         except Product.DoesNotExist:
             return JsonResponse({"message" : "INVALID_PRODUCT"}, status=400)
