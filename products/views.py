@@ -1,5 +1,8 @@
+from json import JSONDecodeError
+
 from django.http  import JsonResponse
 from django.views import View
+from django.db.models import Q
 
 from products.models import Product, Menu, Category
 
@@ -60,63 +63,76 @@ class ProductListView(View):
         return ', '.join(notes_list)
 
     def get(self, request):
-        
-        category = request.GET.get('category', None)
+        try:
+            category = request.GET.get('category', None) , 200, 200001
 
-        products         = Product.objects.all()
-        query_separation = str(category).split('0')
-        category_no      = str(category)
-        category_name    = ""
-
-        if query_separation[-1]:
-            category_id   = query_separation[-1]
-            products      = Product.objects.filter(category_id = category_id)
-            category_name = Category.objects.get(id=category_id).name
-
-        else:
-            menu_id       = query_separation[0]
-            products      = Product.objects.filter(menu_id = menu_id)
-            category_name = Menu.objects.get(id=menu_id).name
-        
-        product_list = [{
-            "id"                  : product.id,
-            "product_name"        : product.name,
-            "price"               : int(product.price),
-            "description"         : self.concat_notes([note.name for note in product.tasting_notes.all()]),
-            "date"                : product.created_at.strftime("%Y-%m-%d"),
-            "thumbnail_image_url" : product.thumbnail_image_url 
-        } for product in products]
+            menu_id     = category[:3].rstrip('0')  
+            category_id = category[3:].lstrip('0')
             
-        result = {
-            "category_no"   : category_no,
-            "category_name" : category_name,
-            "products"      : product_list
-        }
-        
-        return JsonResponse({'result':result}, status=200)
+            category_name = Menu.objects.get(id=menu_id).name
+
+            q = Q()
+
+            if menu_id:
+                q &= Q(menu_id = menu_id)
+
+            if category_id:
+                q &= Q(category_id = category_id)
+                category_name = Category.objects.get(id=category_id).name
+
+            products = Product.objects.filter(q)
+
+            product_list = [{
+                "id"                  : product.id,
+                "product_name"        : product.name,
+                "price"               : int(product.price),
+                "description"         : self.concat_notes([note.name for note in product.tasting_notes.all()]),
+                "date"                : product.created_at.strftime("%Y-%m-%d"),
+                "thumbnail_image_url" : product.thumbnail_image_url 
+            } for product in products]
+                
+            result = {
+                "id"       : category,
+                "name"     : category_name,
+                "products" : product_list
+            }
+
+            return JsonResponse({'result': result}, status=200)
+
+        except JSONDecodeError:
+            return JsonResponse({'message': 'JSONDecodeError'}, status=400)
+
+        except Menu.DoesNotExist:
+            return JsonResponse({'message': 'MENU_DOES_NOT_EXIST'}, status=400)
+
+        except Category.DoesNotExist:
+            return JsonResponse({'message': 'CATEGORY_DOES_NOT_EXIST'}, status=400)
+
 
 class CategoryView(View):
-    def get(self, request):
-        categories = []
-        menus_list = Menu.objects.all()
-
-        for menu_obj in menus_list:
-            menu_no         = str(menu_obj.id)+"00"
-            menu_name       = menu_obj.name
-            categories_list = menu_obj.category_set.all()
-            sub_categories  = []
-            sub_categories  = [
+    def append_sub_categories(self, menu, categories): 
+        sub_categories = [
                 {
-                    "no"   : menu_no+"00"+str(sub_category.id),
+                    "no"   : str(menu.id)+"0000"+str(sub_category.id),
                     "name" : sub_category.name
-                } for sub_category in categories_list if categories_list != []
+                } for sub_category in categories if categories != []
             ]
-            categories.append(
+            
+        return sub_categories
+
+    def get(self, request):
+        result = []
+        menus = Menu.objects.all()
+        
+        for menu in menus:
+            categories     = menu.category_set.all()
+
+            result.append(
                 {
-                    "no"             : menu_no,
-                    "name"           : menu_name,
-                    "sub_categories" : sub_categories
+                    "no"             : str(menu.id)+"00",
+                    "name"           : menu.name,
+                    "sub_categories" : self.append_sub_categories(menu, categories)
                 }
             )
-            
-        return JsonResponse({'result':categories}, status=200)
+
+        return JsonResponse({'result':result}, status=200)

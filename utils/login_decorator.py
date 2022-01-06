@@ -5,7 +5,7 @@ from django.http  import JsonResponse
 
 from my_settings  import SECRET_KEY, ALGORITHM
 
-def login_decortor(func):
+def login_decorator(func):
     def wrapper(self, request, *args, **kwargs):
         try:
             access_token = request.headers.get('Authrozation', None)
