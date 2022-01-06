@@ -1,8 +1,8 @@
 import json
 
-from json.decoder           import JSONDecodeError
-from django.http            import JsonResponse
-from django.views           import View
+from django.http  import JsonResponse
+from django.views import View
+from json.decoder import JSONDecodeError
 
 from orders.models         import Order,Order_Product,OrderStatus
 from products.models       import Cart, Product
@@ -14,9 +14,9 @@ class CartView(View):
     def post(self, request):
         try:
             data = json.loads(request.body)
-
+            
             user       = request.user
-            product_id = Product.objects.get(id = data['product_id'])
+            product_id = data['product_id']
             quantity   = data['quantity']
 
             cart, created  = Cart.objects.get_or_create(
@@ -26,7 +26,7 @@ class CartView(View):
             cart.quantity += quantity
             cart.save()
             return JsonResponse({'message': 'CREATE_CART_SUSSESS'}, status = 201)
-
+        
         except KeyError:
             JsonResponse({'message': 'KEY_ERROR'}, status = 400)
             
@@ -45,12 +45,12 @@ class CartView(View):
 
         for cart in carts:
             result.append({
-                'cart_id'             : cart.id,
-                'product_id'          : cart.product.id,
-                'product_name'        : cart.product.name,
-                'thumbnail_image_url' : cart.product.thumbnail_image.url,
-                'price'               : cart.product.price,
-                'quantity'            : cart.quantity
+                'cart_id'            : cart.id,
+                'product_id'         : cart.product.id,
+                'product_name'       : cart.product.name,
+                'thumbnail_image_url': cart.product.thumbnail_image.url,
+                'price'              : cart.product.price,
+                'quantity'           : cart.quantity
             })
 
         return JsonResponse({'result': result}, status = 200)
@@ -64,7 +64,7 @@ class CartView(View):
         cart = Cart.objects.get(id = data['cart_id'], user = user)
             
         if not Cart.objects.filter(id = data['cart_id'], user = user).exists():
-            return JsonResponse({'message': 'NOT_EXIST'}, status = 404)
+            return JsonResponse({'message': 'NOT_EXIST'}, status = 400)
             
         cart.delete()
 
