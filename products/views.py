@@ -1,5 +1,3 @@
-from json import JSONDecodeError
-
 from django.http  import JsonResponse
 from django.views import View
 from django.db.models import Q
@@ -14,25 +12,25 @@ class MainView(View):
 
             data = [{
                 "categoryName" : "BEST",
-                "products" : [{
-                    "id" : best.id,
-                    "name" : best.name,
-                    "price" : int(best.price),
+                "products"     : [{
+                    "id"           : best.id,
+                    "name"         : best.name,
+                    "price"        : int(best.price),
                     "tasting_note" : [taste.name for taste in best.tasting_notes.all()],
-                    "description" : "",
-                    "image_url" : best.thumbnail_image_url,
-                    "created_at" : best.created_at.strftime('%Y-%m-%d')
+                    "description"  : "",
+                    "image_url"    : best.thumbnail_image_url,
+                    "created_at"   : best.created_at.strftime('%Y-%m-%d')
                 } for best in query_best]},
                 {
                 "categoryName" : "NEW",
-                "products" : [{
-                    "id" : new.id,
-                    "name" : new.name,
-                    "price" : int(new.price),
+                "products"     : [{
+                    "id"           : new.id,
+                    "name"         : new.name,
+                    "price"        : int(new.price),
                     "tasting_note" : [taste.name for taste in new.tasting_notes.all()],
-                    "description" : "",
-                    "image_url" : new.thumbnail_image_url,
-                    "created_at" : new.created_at.strftime('%Y-%m-%d')
+                    "description"  : "",
+                    "image_url"    : new.thumbnail_image_url,
+                    "created_at"   : new.created_at.strftime('%Y-%m-%d')
                 } for new in query_new]
             }]
 
@@ -45,13 +43,13 @@ class ProductDetailView(View):
     def get(self, request, product_id):
         try:
             product = Product.objects.get(id=product_id)
-            image = product.image_set.all()
+            image   = product.image_set.all()
 
             data = {
-                "name" : product.name,
+                "name"        : product.name,
                 "description" : product.description,
-                "price" : int(product.price),
-                "image_url" : [i.image_url for i in image]
+                "price"       : int(product.price),
+                "image_url"   : [i.image_url for i in image]
             }
             return JsonResponse({'result' : data}, status=200)
 
@@ -122,11 +120,10 @@ class CategoryView(View):
 
     def get(self, request):
         result = []
-        menus = Menu.objects.all()
+        menus  = Menu.objects.all()
         
         for menu in menus:
-            categories     = menu.category_set.all()
-
+            categories = menu.category_set.all()
             result.append(
                 {
                     "no"             : str(menu.id)+"00",
